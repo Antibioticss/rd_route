@@ -65,12 +65,12 @@ static void*          _function_ptr_within_image(const char *function_name, void
 
 int rd_route(void *function, void *replacement, void **original_ptr)
 {
-	if (!function || !replacement) {
-		return KERN_INVALID_ARGUMENT;
-	}
-	if (function == replacement) {
-		return KERN_INVALID_ADDRESS;
-	}
+	// if (!function || !replacement) {
+	// 	return KERN_INVALID_ARGUMENT;
+	// }
+	// if (function == replacement) {
+	// 	return KERN_INVALID_ADDRESS;
+	// }
 
 	int ret = KERN_SUCCESS;
 	if (original_ptr) {
@@ -91,9 +91,9 @@ int rd_route_byname(const char *function_name, const char *suggested_image_name,
 	 * These cases are actually handled by rd_route() function itself, but we don't want to dig over
 	 * all loaded images just to do nothing at the end.
 	 */
-	if (!function_name|| !replacement) {
-		return KERN_INVALID_ARGUMENT;
-	}
+	// if (!function_name|| !replacement) {
+	// 	return KERN_INVALID_ARGUMENT;
+	// }
 	void *function = _function_ptr_from_name(function_name, suggested_image_name);
 
 	return rd_route(function, replacement, original);
@@ -102,9 +102,9 @@ int rd_route_byname(const char *function_name, const char *suggested_image_name,
 
 int rd_duplicate_function(void *function, void **duplicate)
 {
-	if (!function || !duplicate) {
-		return (KERN_INVALID_ARGUMENT);
-	}
+	// if (!function || !duplicate) {
+	// 	return (KERN_INVALID_ARGUMENT);
+	// }
 
 	void *image = NULL;
 	mach_vm_size_t image_slide = 0;
@@ -114,10 +114,10 @@ int rd_duplicate_function(void *function, void **duplicate)
 	if (dladdr(function, &image_info)) {
 		image = image_info.dli_fbase;
 	}
-	if (!image) {
-		RDErrorLog("Could not found a loaded mach-o image containing the given function.");
-		return KERN_FAILURE;
-	}
+	// if (!image) {
+	// 	RDErrorLog("Could not found a loaded mach-o image containing the given function.");
+	// 	return KERN_FAILURE;
+	// }
 
 	for (uint32_t i = 0; i < _dyld_image_count(); i++) {
 		if (image == _dyld_get_image_header(i)) {
@@ -148,10 +148,10 @@ int rd_duplicate_function(void *function, void **duplicate)
 	injection_history[history_size].target_address = ({
 		mach_vm_address_t target = 0;
 		kern_return_t err = _remap_image(image, image_slide, &target);
-		if (KERN_SUCCESS != err) {
-			RDErrorLog("Failed to remap segements of the image. See error messages above.");
-			return (err);
-		}
+		// if (KERN_SUCCESS != err) {
+		// 	RDErrorLog("Failed to remap segements of the image. See error messages above.");
+		// 	return (err);
+		// }
 		/* Backup an original function implementation if needed */
 		if (duplicate) {
 			*duplicate = (void *)(target + (function - image));
@@ -168,8 +168,8 @@ int rd_duplicate_function(void *function, void **duplicate)
 
 static kern_return_t _remap_image(void *image, mach_vm_size_t image_slide, mach_vm_address_t *new_location)
 {
-	assert(image);
-	assert(new_location);
+	// assert(image);
+	// assert(new_location);
 
 	mach_vm_address_t data_segment_offset = 0;
 	mach_vm_size_t image_size = _image_size(image, image_slide, &data_segment_offset);
@@ -205,10 +205,10 @@ static kern_return_t _remap_image(void *image, mach_vm_size_t image_slide, mach_
 	                      (image_size + data_segment_offset), VM_FLAGS_ANYWHERE);
 	*new_location += data_segment_offset;
 
-	if (KERN_SUCCESS != err) {
-		RDErrorLog("Failed to allocate a memory region for the function copy - mach_vm_allocate() returned 0x%x\n", err);
-		return (err);
-	}
+	// if (KERN_SUCCESS != err) {
+	// 	RDErrorLog("Failed to allocate a memory region for the function copy - mach_vm_allocate() returned 0x%x\n", err);
+	// 	return (err);
+	// }
 
 	const mach_header_t *header = (mach_header_t *)image;
 	struct load_command *cmd = (struct load_command *)(header + 1);
@@ -247,9 +247,9 @@ static kern_return_t _remap_image(void *image, mach_vm_size_t image_slide, mach_
 			VM_INHERIT_SHARE);
 	}
 
-	if (KERN_SUCCESS != err) {
-		RDErrorLog("Failed to remap the function implementation to the new address - mach_vm_remap() returned 0x%x\n", err);
-	}
+	// if (KERN_SUCCESS != err) {
+	// 	RDErrorLog("Failed to remap the function implementation to the new address - mach_vm_remap() returned 0x%x\n", err);
+	// }
 
 	return (err);
 }
@@ -257,7 +257,7 @@ static kern_return_t _remap_image(void *image, mach_vm_size_t image_slide, mach_
 
 static mach_vm_size_t _image_size(void *image, mach_vm_size_t image_slide, mach_vm_address_t *data_segment_offset)
 {
-	assert(image);
+	// assert(image);
 
 	const mach_header_t *header = (mach_header_t *)image;
 	struct load_command *cmd = (struct load_command *)(header + 1);
@@ -291,8 +291,8 @@ static mach_vm_size_t _image_size(void *image, mach_vm_size_t image_slide, mach_
 
 static kern_return_t _insert_jmp(void* where, void* to)
 {
-	assert(where);
-	assert(to);
+	// assert(where);
+	// assert(to);
 	/**
 	 * We are going to use an absolute JMP instruction for x86_64
 	 * and a relative one for i386.
@@ -324,34 +324,34 @@ static kern_return_t _insert_jmp(void* where, void* to)
 
 static kern_return_t _patch_memory(void *address, mach_msg_type_number_t count, uint8_t *new_bytes)
 {
-	assert(address);
-	assert(count > 0);
-	assert(new_bytes);
+	// assert(address);
+	// assert(count > 0);
+	// assert(new_bytes);
 
 	kern_return_t kr = 0;
 	kr = mach_vm_protect(mach_task_self(), (mach_vm_address_t)address, (mach_vm_size_t)count, FALSE, VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE | VM_PROT_COPY);
-	if (kr != KERN_SUCCESS) {
-		RDErrorLog("mach_vm_protect() failed with error: 0x%x", kr);
-		return (kr);
-	}
+	// if (kr != KERN_SUCCESS) {
+	// 	RDErrorLog("mach_vm_protect() failed with error: 0x%x", kr);
+	// 	return (kr);
+	// }
 
 	kr = mach_vm_write(mach_task_self(), (mach_vm_address_t)address, (vm_offset_t)new_bytes, count);
-	if (kr != KERN_SUCCESS) {
-		RDErrorLog("mach_vm_write() failed with error: 0x%x", kr);
-		return (kr);
-	}
+	// if (kr != KERN_SUCCESS) {
+	// 	RDErrorLog("mach_vm_write() failed with error: 0x%x", kr);
+	// 	return (kr);
+	// }
 
 	kr = mach_vm_protect(mach_task_self(), (mach_vm_address_t)address, (mach_vm_size_t)count, FALSE, VM_PROT_READ | VM_PROT_EXECUTE);
-	if (kr != KERN_SUCCESS) {
-		RDErrorLog("mach_vm_protect() failed with error: 0x%x", kr);
-	}
+	// if (kr != KERN_SUCCESS) {
+	// 	RDErrorLog("mach_vm_protect() failed with error: 0x%x", kr);
+	// }
 
 	return (kr);
 }
 
 static void* _function_ptr_from_name(const char *function_name, const char *suggested_image_name)
 {
-	assert(function_name);
+	// assert(function_name);
 
 	for (uint32_t i = 0; i < _dyld_image_count(); i++) {
 		void *header = (void *)_dyld_get_image_header(i);
@@ -370,7 +370,7 @@ static void* _function_ptr_from_name(const char *function_name, const char *sugg
 			}
 		}
 	}
-	RDErrorLog("Failed to find symbol `%s` in the current address space.", function_name);
+	// RDErrorLog("Failed to find symbol `%s` in the current address space.", function_name);
 
 	return NULL;
 }
@@ -378,8 +378,8 @@ static void* _function_ptr_from_name(const char *function_name, const char *sugg
 
 static void* _function_ptr_within_image(const char *function_name, void *macho_image_header, uintptr_t vmaddr_slide)
 {
-	assert(function_name);
-	assert(macho_image_header);
+	// assert(function_name);
+	// assert(macho_image_header);
 	/**
 	 * Try the system NSLookup API to find out the function's pointer withing the specifed header.
 	 */
@@ -424,10 +424,10 @@ static void* _function_ptr_within_image(const char *function_name, void *macho_i
 		command = (void *)command + command->cmdsize;
 	}
 
-	if (!symtab || !seg_linkedit || !seg_text) {
-		RDErrorLog("The given Mach-O image header is missing some important sections.");
-		return NULL;
-	}
+	// if (!symtab || !seg_linkedit || !seg_text) {
+	// 	RDErrorLog("The given Mach-O image header is missing some important sections.");
+	// 	return NULL;
+	// }
 
 	uintptr_t file_slide = ((uintptr_t)seg_linkedit->vmaddr - (uintptr_t)seg_text->vmaddr) - seg_linkedit->fileoff;
 	uintptr_t strings = (uintptr_t)header + (symtab->stroff + file_slide);
